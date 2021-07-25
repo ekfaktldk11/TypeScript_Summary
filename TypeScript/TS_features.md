@@ -32,3 +32,6 @@
 - maintainability : 위의 것들을 기반으로 유지 보수에 강력함
 
 - 위 네가지 특성들을 잘 따라 나가면 생산성, 높은 퀄리티 그리고 또 빠른 프로그래밍을 할 수 있음
+
+# TypeScript Official Docs Info
+TypeScript: https://www.typescriptlang.org
