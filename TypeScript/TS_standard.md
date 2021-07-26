@@ -4,3 +4,4 @@
 
 - ts 파일을 업데이트 하면서 계속 tsc main.ts 하기는 귀찮으니 /*watch-mode*/ 를 사용하여 main.ts 가 업데이트 및 세이브 될때마다 main.js도 같이 업데이트 할 수 있도록 하는 기능
 -> tsc main.ts -w
+
