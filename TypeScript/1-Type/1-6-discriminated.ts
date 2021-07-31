@@ -12,7 +12,7 @@
         reason: string;
     };
     type LoginState = SuccessState | FailState
-    function login_(id: string, password: string): LoginState {
+    function login(id: string, password: string): LoginState {
         return {
             result: 'success',
             response: { // SuccessState의 response가 아님
@@ -23,7 +23,7 @@
     // printLoginState(state)
     // success -> body
     // fail -> reason
-    function printLoginState_(state: LoginState) {
+    function printLoginState(state: LoginState) {
         // success or fail
         if(state.result === 'success'){
             console.log(state.response.body);
