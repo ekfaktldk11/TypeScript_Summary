@@ -37,5 +37,5 @@
     let dayOfweek : DaysOfWeek = 'Monday';
     // dayOfweek = 1; -> Type error 발생 -> type DaysOfWeek에 명시된 value들을 제외하고는 할당 불가함 
     dayOfweek = 'Wednesday';
-    
+    // union으로 했을 때 문제가 발생하면 그 때 enum을 사용하는 것이 좋음
 }
