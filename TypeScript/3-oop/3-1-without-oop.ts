@@ -1,4 +1,5 @@
 {// local scope
+    // Imperative programming - 절차형 함수
 
     type CoffeeCup = {
         shots: number;
