@@ -12,6 +12,13 @@
 		  - 각각의 기능별로 클래스를 따로 만들어서 필요한것을 가져다가 쓰는 방식
 		  - 코드의 재사용성을 극대화 시켜줌!
 		  - 하지만 클래스간의 커플링이 심함. -> so what ? -> see 3-8
+      - 복잡한 상속의 수직구조를 피할 수 있고, 상속의 레벨을 한단계로만 유지하면서
+      필요한 코드를 재사용할 수 있음! 
+
+      But 단점도 존재
+      - composition class는 서로간에 너무 타이트하게 커플링이 되어있어서
+      컴포지션 클래스가 변경되거나 다른것으로 대체하고 싶어도 서로 연결되어있어서
+      이 컴-클을 사용하는 모든 클래스를 다 바꿔줘야함
 	  */
 
   /*
@@ -82,7 +89,43 @@
   }
 
   // 싸구려 우유 거품기 - for compostion
-  class CheapMilkSteamer {
+  // class CheapMilkSteamer {
+  //   private steamMilk(): void {
+  //     console.log('Steaming some milk... ');
+  //   }
+  //   makeMilk(cup: CoffeeCup): CoffeeCup {
+  //     this.steamMilk();
+  //     return {
+  //       ...cup,
+  //       hasMilk: true,
+  //     };
+  //   }
+  // }
+  // 설탕 제조기 - for compostion
+  // class CandySugarMixer {
+  //   private getSuger() {
+  //     console.log('Getting some sugar from candy');
+  //     return true;
+  //   }
+
+  //   addSugar(cup: CoffeeCup): CoffeeCup {
+  //     const sugar = this.getSuger();
+  //     return {
+  //       ...cup,
+  //       hasSugar: sugar,
+  //     };
+  //   }
+  // }
+
+  interface MilkFrother {
+    makeMilk(cup: CoffeeCup): CoffeeCup;
+  }
+
+  interface SugarProvider {
+    addSugar(cup: CoffeeCup): CoffeeCup;
+  }
+
+  class CheapMilkSteamer implements MilkFrother {
     private steamMilk(): void {
       console.log('Steaming some milk... ');
     }
@@ -94,8 +137,49 @@
       };
     }
   }
-  // 설탕 제조기 - for compostion
-  class AutomaticSugarMixer {
+
+  class FancyMilkSteamer implements MilkFrother {
+    private steamMilk(): void {
+      console.log('Steaming some milk... ');
+    }
+    makeMilk(cup: CoffeeCup): CoffeeCup {
+      this.steamMilk();
+      return {
+        ...cup,
+        hasMilk: true,
+      };
+    }
+  }
+
+  class ColdMilkSteamer implements MilkFrother {
+    private steamMilk(): void {
+      console.log('Steaming some milk... ');
+    }
+    makeMilk(cup: CoffeeCup): CoffeeCup {
+      this.steamMilk();
+      return {
+        ...cup,
+        hasMilk: true,
+      };
+    }
+  }
+
+  class CandySugarMixer implements SugarProvider {
+    private getSuger() {
+      console.log('Getting some sugar from candy');
+      return true;
+    }
+
+    addSugar(cup: CoffeeCup): CoffeeCup {
+      const sugar = this.getSuger();
+      return {
+        ...cup,
+        hasSugar: sugar,
+      };
+    }
+  }
+
+  class SugarMixer implements SugarProvider {
     private getSuger() {
       console.log('Getting some sugar from candy');
       return true;
@@ -114,7 +198,7 @@
     constructor(
       beans: number,
       public readonly serialNumber: string,
-      private milkFrother: CheapMilkSteamer
+      private milkFrother: MilkFrother
     ) {
       super(beans);
     }
@@ -130,7 +214,7 @@
     }
   }
   class SweetCoffeeMaker extends CoffeeMachine {
-    constructor(private beans: number, private sugar: AutomaticSugarMixer) {
+    constructor(private beans: number, private sugar: SugarProvider) {
       super(beans);
     }
     makeCoffee(shots: number): CoffeeCup {
@@ -143,8 +227,8 @@
   class SweetCaffeLatteMachine extends CoffeeMachine {
     constructor(
       private beans: number,
-      private milk: CheapMilkSteamer,
-      private sugar: AutomaticSugarMixer
+      private milk: MilkFrother,
+      private sugar: SugarProvider
     ) {
       super(beans);
     }
@@ -154,4 +238,36 @@
       return this.milk.makeMilk(this.sugar.addSugar(coffee));
     }
   }
+
+  // 그럼 이 컴포지션 클래스의 문제점을 알아보자 !
+  // const CheapMilkMaker = new CheapMilkSteamer();
+  // const candySugar = new CandySugarMixer();
+  // const sweetMachine = new SweetCoffeeMaker(12, candySugar);
+  // const latteMachine = new CaffeeLatteMachine(12, 'SS', CheapMilkMaker);
+  // const sweetLatteMachine = new SweetCaffeLatteMachine(
+  //   12,
+  //   CheapMilkMaker,
+  //   candySugar
+  // );
+  // 위 몇 줄만 봐도 엄청 재사용성이 떨어짐
+  /*
+    # 여기서 중요한 포인트!!
+    [ Decoupling 의 원칙 ]
+    - 위 몇 줄의 코드처럼 클래스들간의 상호 작용이 발생하는 경우
+    클래스 자신을 노출하는 것이 아니라 계약서를 통해서 의사소통을 해야함
+    그럼 그 계약서란 ?? -> 바로 interface !!
+  */
+
+  //
+  const CheapMilkMaker = new CheapMilkSteamer();
+  const candySugar = new CandySugarMixer();
+  
+  //
+  const sweetMachine = new SweetCoffeeMaker(12, candySugar);
+  const latteMachine = new CaffeeLatteMachine(12, 'SS', CheapMilkMaker);
+  const sweetLatteMachine = new SweetCaffeLatteMachine(
+    12,
+    CheapMilkMaker,
+    candySugar
+  );
 }
