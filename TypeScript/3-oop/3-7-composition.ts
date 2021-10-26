@@ -36,18 +36,17 @@
   interface CoffeeMaker {
     makeCoffee(shots: number): CoffeeCup;
   }
-
   class CoffeeMachine implements CoffeeMaker {
     // 'CoffeeMachine 클래스는 CoffeeMaker라는 인터페이스를 구현하는 클래스 입니다' 라는 의미
     private static BEANS_GRAM_PER_SHOT: number = 7; // class level
     private coffeeBeans: number = 0; // instance (object) level
 
-    constructor(coffeeBeans: number) {
+    constructor(
+      coffeeBeans: number,
+      private milk: MilkFrother,
+      private sugar: SugarProvider
+    ) {
       this.coffeeBeans = coffeeBeans;
-    }
-
-    static makeMachine(coffeeBeans: number): CoffeeMachine {
-      return new CoffeeMachine(coffeeBeans);
     }
 
     fillCoffeeBeans(beans: number) {
@@ -82,11 +81,56 @@
     }
 
     makeCoffee(shots: number): CoffeeCup {
-      this.gridBeans(shots); // 커피를 갈아야함
-      this.preheat(); // 커피기계를 따듯하게 데움
-      return this.extract(shots); // 커피물을 내려서 추출
+      this.gridBeans(shots);
+      this.preheat();
+      const coffee = this.extract(shots);
+      const sugarAdded = this.sugar.addSugar(coffee);
+      return this.milk.makeMilk(sugarAdded);
     }
   }
+  // class CoffeeMachine implements CoffeeMaker {
+    //   // 'CoffeeMachine 클래스는 CoffeeMaker라는 인터페이스를 구현하는 클래스 입니다' 라는 의미
+    //   private static BEANS_GRAM_PER_SHOT: number = 7; // class level
+    //   private coffeeBeans: number = 0; // instance (object) level
+
+    //   constructor(coffeeBeans: number) {
+    //     this.coffeeBeans = coffeeBeans;
+    //   }
+
+    //   static makeMachine(coffeeBeans: number): CoffeeMachine {
+    //     return new CoffeeMachine(coffeeBeans);
+    //   }
+
+    //   fillCoffeeBeans(beans: number) {
+    //     if (beans < 0) {
+    //       throw new Error('value for beans should be greater than 0');
+    //     }
+    //     this.coffeeBeans += beans;
+    //   }
+
+    //   clean() {
+    //     console.log('cleaning the machine...');
+    //   }
+
+    //   private gridBeans(shots: number) {
+    //     console.log(`grinding beans for ${shots}`);
+    //     if (this.coffeeBeans < shots * CoffeeMachine.BEANS_GRAM_PER_SHOT) {
+    //       throw new Error('Not enough coffee beans!');
+    //     }
+    //     this.coffeeBeans -= shots * CoffeeMachine.BEANS_GRAM_PER_SHOT;
+    //   }
+
+    //   private preheat(): void {
+    //     console.log('heating up... ');
+    //   }
+
+    //   private extract(shots: number): CoffeeCup {
+    //     console.log(`Pulling ${shots} shots...`); // 커피내리는중
+    //     return {
+    //       shots,
+    //       hasMilk: false,
+    //     };
+    //   }
 
   // 싸구려 우유 거품기 - for compostion
   // class CheapMilkSteamer {
@@ -164,6 +208,12 @@
     }
   }
 
+  class NoMilk implements MilkFrother {
+    makeMilk(cup: CoffeeCup): CoffeeCup {
+      return cup; // 우유를 넣지 않고 리턴
+    }
+  }
+
   class CandySugarMixer implements SugarProvider {
     private getSuger() {
       console.log('Getting some sugar from candy');
@@ -194,50 +244,56 @@
     }
   }
 
-  class CaffeeLatteMachine extends CoffeeMachine {
-    constructor(
-      beans: number,
-      public readonly serialNumber: string,
-      private milkFrother: MilkFrother
-    ) {
-      super(beans);
-    }
-    // CaffeeLatteMachine 에서만 사용될 steamMilk()
-    private steamMilk(): void {
-      console.log('Steaming some milk...');
-    }
-
-    makeCoffee(shots: number): CoffeeCup {
-      const coffee = super.makeCoffee(shots); // 부모의 makeCoffee() 의 가열하고 그라인딩하는 작업을 다 하도록 함
-      this.steamMilk(); // 그리고 우유만 부음
-      return this.milkFrother.makeMilk(coffee);
-    }
-  }
-  class SweetCoffeeMaker extends CoffeeMachine {
-    constructor(private beans: number, private sugar: SugarProvider) {
-      super(beans);
-    }
-    makeCoffee(shots: number): CoffeeCup {
-      const coffee = super.makeCoffee(shots);
-      return this.sugar.addSugar(coffee);
+  class NoSugar implements SugarProvider {
+    addSugar(cup: CoffeeCup): CoffeeCup {
+      return cup; // 설탕을 넣지 않고 리턴
     }
   }
 
-  // 그럼 달달한 카페라테를 만들고 싶으면 ..? 여기서 또 추가하여 흑설탕을 추가하고 싶다면? -> composition 으로 해결
-  class SweetCaffeLatteMachine extends CoffeeMachine {
-    constructor(
-      private beans: number,
-      private milk: MilkFrother,
-      private sugar: SugarProvider
-    ) {
-      super(beans);
-    }
+  // class CaffeeLatteMachine extends CoffeeMachine {
+  //   constructor(
+  //     beans: number,
+  //     public readonly serialNumber: string,
+  //     private milkFrother: MilkFrother
+  //   ) {
+  //     super(beans);
+  //   }
+  //   // CaffeeLatteMachine 에서만 사용될 steamMilk()
+  //   private steamMilk(): void {
+  //     console.log('Steaming some milk...');
+  //   }
 
-    makeCoffee(shots: number): CoffeeCup {
-      const coffee = super.makeCoffee(shots);
-      return this.milk.makeMilk(this.sugar.addSugar(coffee));
-    }
-  }
+  //   makeCoffee(shots: number): CoffeeCup {
+  //     const coffee = super.makeCoffee(shots); // 부모의 makeCoffee() 의 가열하고 그라인딩하는 작업을 다 하도록 함
+  //     this.steamMilk(); // 그리고 우유만 부음
+  //     return this.milkFrother.makeMilk(coffee);
+  //   }
+  // }
+  // class SweetCoffeeMaker extends CoffeeMachine {
+  //   constructor(private beans: number, private sugar: SugarProvider) {
+  //     super(beans);
+  //   }
+  //   makeCoffee(shots: number): CoffeeCup {
+  //     const coffee = super.makeCoffee(shots);
+  //     return this.sugar.addSugar(coffee);
+  //   }
+  // }
+
+  // // 그럼 달달한 카페라테를 만들고 싶으면 ..? 여기서 또 추가하여 흑설탕을 추가하고 싶다면? -> composition 으로 해결
+  // class SweetCaffeLatteMachine extends CoffeeMachine {
+  //   constructor(
+  //     private beans: number,
+  //     private milk: MilkFrother,
+  //     private sugar: SugarProvider
+  //   ) {
+  //     super(beans);
+  //   }
+
+  //   makeCoffee(shots: number): CoffeeCup {
+  //     const coffee = super.makeCoffee(shots);
+  //     return this.milk.makeMilk(this.sugar.addSugar(coffee));
+  //   }
+  // }
 
   // 그럼 이 컴포지션 클래스의 문제점을 알아보자 !
   // const CheapMilkMaker = new CheapMilkSteamer();
@@ -256,18 +312,55 @@
     - 위 몇 줄의 코드처럼 클래스들간의 상호 작용이 발생하는 경우
     클래스 자신을 노출하는 것이 아니라 계약서를 통해서 의사소통을 해야함
     그럼 그 계약서란 ?? -> 바로 interface !!
+    - interface 를 통해 같은 클래스르 재사용하면서
+    내가 원하는 부품을 가져와서 서로 다른 객체를 만들 수 있음 !
   */
 
-  //
-  const CheapMilkMaker = new CheapMilkSteamer();
+  // Milk
+  const cheapMilkMaker = new CheapMilkSteamer();
+  const fancyMilkMaker = new FancyMilkSteamer();
+  const coldMilkMaker = new ColdMilkSteamer();
+  const noMilk = new NoMilk();
+
+  // Sugar
   const candySugar = new CandySugarMixer();
-  
+  const sugar = new SugarMixer();
+  const noSugar = new NoSugar();
+
   //
-  const sweetMachine = new SweetCoffeeMaker(12, candySugar);
-  const latteMachine = new CaffeeLatteMachine(12, 'SS', CheapMilkMaker);
-  const sweetLatteMachine = new SweetCaffeLatteMachine(
+  const sweetCandyMachine = new CoffeeMachine(12, noMilk, candySugar);
+  const sweetMachine = new CoffeeMachine(12, noMilk, sugar);
+
+  const latteMachine = new CoffeeMachine(12, cheapMilkMaker, noSugar);
+  const coldLatteMachine = new CoffeeMachine(12, coldMilkMaker, noSugar);
+  const sweetLatteMachine = new CoffeeMachine(
     12,
-    CheapMilkMaker,
+    cheapMilkMaker,
     candySugar
   );
+  
+  /**
+   * composition에서 배운내용을 순서대로 정리하면
+   * (1) 상속이 depth가 깊어질 수 록 서로 관계가 복잡해 지기에
+      composition을 통해 각각의 기능별 클래스를 구현해서 필요한 것을 사용함
+   * (2) composition class는 서로간에 너무 타이트하게 커플링이 되어있어서
+      컴포지션 클래스가 변경되거나 다른것으로 대체하고 싶어도 서로 연결되어있어서
+      이 컴-클을 사용하는 모든 클래스를 다 바꿔줘야함
+   * (3) (2)의 컴포지션의 단점을 보완하기 위해 interface 라는 계약서를 구현해서
+      디커플링함
+   * (4) 의사소통하는 클래스를 줄이고 interface를 통해 같은 클래스를 사용하면서
+      내가 원하는 부품을 가져와서 서로 다른 객체를 만듬
+   * (5) 결론으로 상속, 컴포지션, 인터페이스의 장단점을 이용하여 적절한 상황에 사용
+   */
+
+  /*
+    엘리샘의 꿀팁 !
+    - Over Engineering 하지마라!
+    -> 타이트한 일정내에 어떤 기능들을 구현해야 하는데
+    이럴 때 기능을 구현하는 것에 초점을 둬야지 기능을 구현하기도 전에
+    어떻게 하면 코드를 개선할 수 있을 까 하는 것에 초점을 두거나
+    앞으로 발생할지도 안할지도 모르는 사항에 대비해 초반에
+    아주 엑썰런트하게 코드를 복잡하게 구현할 필요가 전혀 없음!
+    이것이 개발자의 기본 !
+  */
 }
